@@ -1,0 +1,344 @@
+---
+title: "ANALISIS PENDAPATAN RENTAL BERDASARKAN KATEGORI FILM PADA DATABASE SAKILA DENGAN BAHASA PEMROGRAMAN R"
+author: "Siti Munaajii_M0725053_C"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+<style>
+/* Penggunaan internal CSS pada R-Markdown */
+
+/* Mengatur font seluruh dokumen */
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #f8fafc;
+  color: #1e293b;
+  text-align: justify;
+}
+
+/* Mengatur judul utama */
+.title {
+  text-align: center;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(90deg,
+                              #0f172a,
+                              #1e3a5f);
+  color: white;
+}
+
+.author, .date{
+  text-align: center;
+  color: #0f172a;
+}
+
+/* Mengatur heading 1*/
+h1 {
+  color: white;
+  background:
+  linear-gradient(90deg,
+                  #1e3a5f,
+                  #2563eb);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Mengatur heading 2*/
+h2 {
+  color: #1e3a5f;
+  border-bottom: 3px solid #2563eb;
+  padding-bottom: 5px;
+}
+
+/* Mengatur heading 3*/
+h3 {
+  color:#1e3a5f;
+  border-left: 6px solid #2563eb;
+  padding-left: 10px;
+}
+
+/* Mengatur style paragraf */
+p{
+  text-align:justify;
+}
+
+/* Mengatur style tabel */
+tr:nth-child(even){
+  background-color: #f1f5f9;
+}
+
+tr:hover{
+  background-color: #dbeafe;
+}
+
+/* Mengatur box yang akan diisi dengan teks */
+.box{
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  border-left: 6px solid #2563eb;
+  margin-top:20px;
+  margin-bottom:20px;
+  box-shadow:
+  0 4px 12px rgba(0,0,0,0.1);
+}
+</style>
+
+# Pendahuluan
+## Latar Belakang
+<p>Di era digital ini, tepatnya tahun 2026, perkembangan teknologi informasi memungkinkan pemilik bisnis untuk menyimpan data perusahaan pada suatu sistem basis data. Basis data atau <em>database</em> dapat menyimpan data dalam jumlah besar sehingga mempermudah dalam mengolah dan menganalisis informasi yang nantinya dapat digunakan untuk mendukung pengambilan keputusan atau strategi bisnis. Salah satu contoh dari basis data yaitu <em>database</em> sakila yang telah tersedia pada perangkat lunak MySQL. <em>Database</em> ini mensimulasikan sistem rental film yang memuat berbagai informasi seperti data pelanggan, film, inventory, transaksi rental, pembayaran, dan kategori film.</p>
+
+<p>Pada bisnis rental film, kemampuan analisis terhadap kategori film dapat mendukung proses pengambilan keputusan yang tepat guna mengoptimalkan pendapatan bisnis. Analisis terhadap kategori film perlu dilakukan karena setiap kategori memiliki tingkat minat pelanggan yang berbeda. Kategori film dengan tingkat rental tinggi cenderung menghasilkan total pendapatan (<em>revenue</em>) yang lebih besar dibanding kategori lainnya. Selain itu, analisis  ini juga membantu pemilik bisnis untuk lebih memahami preferensi pelanggan sehingga dapat menentukan strategi bisnis yang tepat, seperti pengelolaan inventory film maupun strategi pemasaran.</p> 
+
+<p>Pada laporan ini dilakukan analisis terhadap total pendapatan (<em>revenue</em>) berdasarkan kategori film pada <em>database</em> sakila menggunakan bahasa pemrograman R. Analisis dilakukan untuk mengetahui distribusi <em>revenue</em> pada setiap kategori film, menganalisis hubungan antara jumlah rental dan <em>revenue</em> yang dihasilkan, serta menentukan kategori dengan <em>revenue</em> tertinggi dan terendah. Analisis ini kemudian disusun dalam sebuah laporan hasil analisis yang memuat informasi, seperti identifikasi pola kategori film yang paling diminati pelanggan serta hubungan antara jumlah rental dengan total pendapatan (revenue) yang dihasilkan. Hasil analisis diharapkan dapat memberikan gambaran terkait pola preferensi pelanggan sebagai dasar dalam pengambilan keputusan mengenai strategi bisnis yang tepat untuk meningkatkan keuntungan (profit) bisnis rental film.
+</p>
+
+## Rumusan Masalah
+<p>
+1.  Bagaimaa distribusi total pendapatan (<em>revenue</em>) pada setiap kategori film?
+2.  Bagaimana hubungan antara jumlah rental dan total pendapatan (<em>revenue</em>)?
+3.  Kategori film apa yang memiliki total pendapatan (<em>revenue</em>) tertinggi?
+4.  Kategori film apa yang memiliki total pendapatan (<em>revenue</em>) terendah?
+</p>
+
+## Tujuan
+<p>
+1.  Mengidentifikasi distribusi total pendapatan (<em>revenue</em>) pada setiap kategori film.
+2.  Menganalisis hubungan antara jumlah rental dan total pendapatan (<em>revenue</em>).
+3.  Mengetahui kategori film yang memiliki total pendapatan (<em>revenue</em>) tertinggi.
+4.  Mengetahui kategori film yang memiliki total pendapatan (<em>revenue</em>) terendah.
+</p>
+
+# Deskripsi Data
+## Sumber Data
+<p>Data yang digunakan berasal dari database sakila yang tersedia pada perangkat lunak MySQL. Data diakses menggunakan package `DBI` dan `odbc` melalui koneksi <em>database</em> MySQL pada R Studio.</p>
+
+## Variabel Data
+<p>
+<em>Database</em> sakila memuat informasi terkait sistem rental film. Variabel yang digunakan dalam analisis, yaitu: 
+1. `name` pada tabel category sebagai `kategori_film` 
+2. Menjumlahkan (SUM) `payment` sebagai  total_pendapatan
+3. Menghitung banyaknya (COUNT) `rental_id` sebagai `total_rental`
+</p>
+
+## Deskripsi Analisis
+Analisis ini dilakukan dengan menghubungkan beberapa tabel pada database sakila, yaitu tabel `category`, `film_category`, `inventory`, `rental`, dan `payment`. Data kemudian diolah untuk memperoleh jumlah rental dan total pendapatan (<em>revenue</em>) pada masing-masing kategori film. <em>Revenue</em> dihitung menggunakan persamaan berikut:
+$$
+Revenue = \sum_{i=1}^{n} Payment_i
+$$
+Keterangan:
+<p>$Revenue$ = Total pendapatan</p>
+<p>$Payment_i$ = Pembayaran transaksi ke-i</p>
+<p>$n$ = Jumlah transaksi</P>
+
+# Persiapan Data
+```{r library}
+library(DBI)
+library(odbc)
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(knitr)
+```
+
+## Koneksi Database
+```{r koneksi}
+con <- dbConnect(odbc(),
+                 Driver   = "MySQL ODBC 8.0 ANSI Driver",
+                 Server   = "127.0.0.1",
+                 UID      = "adminsql",
+                 PWD      = "adminlama",
+                 Port     = 3306,
+                 Database = "sakila")
+```
+::: box
+<em>Database</em> sakila pada MySQL dikoneksikan ke R menggunakan package `DBI` dan `odbc`, serta fungsi `dbConnect()`.
+:::
+
+## Pengambilan Data
+```{r query}
+query <- "SELECT c.name AS kategori_film, SUM(p.amount) AS total_pendapatan, COUNT(r.rental_id) AS total_rental
+FROM category c
+JOIN film_category fc ON c.category_id = fc.category_id
+JOIN inventory i ON fc.film_id = i.film_id
+JOIN rental r ON i.inventory_id = r.inventory_id
+JOIN payment p ON r.rental_id = p.rental_id
+GROUP BY c.name
+ORDER BY total_pendapatan DESC"
+
+data_PendapatanFilm <- dbGetQuery(con, query)
+data_PendapatanFilm
+```
+
+## Eksplorasi Data
+```{r eksplorasi}
+str(data_PendapatanFilm)
+colSums(is.na(data_PendapatanFilm))
+```
+::: box 
+Seluruh data bertipe karakter, numerik, dan integer, serta tidak ditemukan missing value di dalamnya, sehingga data siap untuk dilakukan analisis lebih lanjut.
+:::
+
+## Ringkasan Data
+```{r tabel ringkasan data}
+kable(data_PendapatanFilm,
+      caption = "Tabel Pendapatan (Revenue) Berdasarkan Kategori Film")
+
+summary(data_PendapatanFilm)
+```
+::: box
+Tabel di atas menunjukkan total pendapatan (<em>revenue</em>) dan jumlah rental dari masing-masing kategori film pada <em>database</em> sakila.
+:::
+
+
+# Analisis dan Visualisasi Data
+## Analisis Total Pendapatan (Revenue) Berdasarkan Kategori Film
+<p>Pada analisis ini dilakukan perhitungan <em>revenue</em> pada setiap kategori film.</p>
+```{r}
+Revenue_KategoriFilm <- data_PendapatanFilm %>%
+  arrange(desc(total_pendapatan))
+
+Revenue_KategoriFilm
+```
+
+### Visualisasi Total Pendapatan (Revenue) Berdasarkan Kategori Film
+```{r visualisasi revenue, fig.width = 12, fig.height = 10}
+ggplot(data_PendapatanFilm, aes(x = reorder(kategori_film, total_pendapatan),
+                 y = total_pendapatan,
+                 fill = total_pendapatan)) +
+geom_bar(stat = "identity",
+         width = 0.8) +
+coord_flip() +
+geom_text(aes(label = dollar(total_pendapatan)),
+          hjust = -0.1, 
+          size = 3.5,
+          color = "#0f172a",
+          fontface = "bold") +
+theme_minimal() +
+scale_fill_gradient(low  = "#f59e0b",
+                    high = "#16a34a") +
+labs(title = "Total Pendapatan (Revenue) Berdasarkan Kategori Film",
+     subtitle = "Pada Database Sakila",
+     x = "Kategori Film",
+     y = "Total Pendapatan (Revenue)") +
+theme(
+  legend.position = "none",
+  plot.title = element_text(
+    hjust = 0.5, size = 16, face = "bold"),
+  plot.subtitle = element_text(
+    hjust = 0.5, size = 14, face = "bold"),
+  axis.text.y = element_text(
+    size = 14, face = "bold"),
+  axis.text.x = element_text(
+  size = 14, face = "bold")) +
+scale_y_continuous(labels = dollar)
+```
+
+### Interpretasi
+<p>Berdasarkan hasil visualisasi bar chart "Total Pendapatan (Revenue) Berdasarkan Kategori Film", diketahui bahwa terdapat perbedaan <em>revenue</em> pada setiap kategori film dari <em>database</em>. Kategori film dengan <em>revenue</em> yang tinggi menunjukkan tingginya minat pelanggan terhadap genre film tersebut. Tingginya <em>revenue</em> dapat dipengaruhi oleh beberapa faktor, seperti popularitas genre film, jumlah inventory yang tersedia, serta tingginya frekuensi rental pelanggan. Sebaliknya, kategori film dengan <em>revenue</em> terendah menunjukkan rendahnya aktivitas rental sehingga kontribusi pendapatannya lebih kecil dibanding kategori lainnya.</p>
+
+<p>Perbedaan <em>revenue</em> antar kategori juga dapat menunjukkan adanya variasi preferensi pelanggan terhadap genre film tertentu. Dengan mengetahui kategori yang paling banyak menghasilkan <em>revenue</em>, perusahaan rental film dapat menentukan strategi bisnis yang lebih tepat, misalnya menambah inventory pada kategori film populer serta menerapkan strategi promosi terhadap kategori dengan revenue rendah.</p>
+
+## Analisis Korelasi
+```{r korelasi}
+korelasi <- cor(
+  data_PendapatanFilm$total_rental,
+  data_PendapatanFilm$total_pendapatan
+)
+
+korelasi
+```
+<p>Analisis korelasi digunakan untuk mengetahui hubungan antara jumlah rental dan total pendapatan (<em>revenue</em>). Semakin mendekati 1, maka hubungan kedua variabel semakin kuat dan positif. Berdasarkan hasil analisis, diketahui korelasi antara jumlah rental dan total pendapatan (<em>revenue</em>) sebesar 0,8510213. Angka tersebut menunjukkan bahwa terdapat hubungan yang cukup kuat antara jumlah rental dan total pendapatan (<em>revenue</em>). Semakin besar jumlah rental pada suatu kategori film, semakin tinggi pula total pendapatan (<em>revenue</em>) yang dihasilkan dari kategori film tersebut.</p>
+
+### Visualisasi Hubungan Jumlah Rental dan Total Pendapatan (<em>Revenue</em>)
+```{r scatterplot, fig.height=8, fig.weight = 16}
+ggplot(data_PendapatanFilm, aes(x = total_rental, 
+                                y = total_pendapatan)) +
+geom_point(size = 5,
+           color = "#16a34a") +
+geom_smooth(method = "lm",
+            se = FALSE,
+            color = "#1e3a5f",
+            linewidth = 1.5) +
+labs(title = "Hubungan Jumlah Rental dan Total Pendapatan (Revenue)",
+     subtitle = "Analisis Regresi Linear",
+     x = "Jumlah Rental",
+     y = "Total Pndapatan (Revenue)") +
+theme_minimal() +
+theme(
+  plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+  plot.subtitle = element_text(
+    hjust = 0.5, size = 14, face = "bold"),
+  axis.text.y = element_text(
+    size = 14, face = "bold"),
+  axis.text.x = element_text(
+  size = 14, face = "bold")) +
+scale_y_continuous(labels = dollar)
+```
+
+### Interpretasi
+<p>Berdasarkan hasil scatter plot "Hubungan Jumlah Rental dan Total Pendapatan (<em>Revenue</em>)", terlihat adanya pola hubungan positif antara jumlah rental dan total pendapatan (<em>revenue</em>. Titik-titik pada grafik membentuk pola menaik yang menunjukkan bahwa kategori film dengan jumlah rental lebih tinggi cenderung menghasilkan <em>revenue</em> yang lebih besar.</p>
+
+<p>Namun, terdapat beberapa kategori film yang memiliki jumlah rental cukup tinggi tetapi revenue yang dihasilkan tidak sebesar kategori lainnya. Hal ini dapat dipengaruhi oleh perbedaan harga rental film maupun variasi jumlah inventory yang tersedia pada masing-masing kategori. Dengan demikian, dapat diketahui bahwa jumlah rental merupakan salah satu faktor utama yang mempengaruhi revenue perusahaan rental film.</p>
+
+## Analisis Kategori Film dengan Total Pendapatan (<em>Revenue</em>) Tertinggi & Terendah
+```{r kategori}
+KategoriTertinggi<- Revenue_KategoriFilm$kategori_film[1]
+
+KategoriTerendah <- Revenue_KategoriFilm$kategori_film[nrow(Revenue_KategoriFilm)]
+
+KategoriTertinggi
+KategoriTerendah
+```
+```{r perbandingan}
+Perbandingan <- data.frame(
+  perbandingan_kategori = c(KategoriTertinggi, KategoriTerendah),
+  
+  perbandingan_revenue = c(
+    max(Revenue_KategoriFilm$total_pendapatan),
+    min(Revenue_KategoriFilm$total_pendapatan)))
+
+Perbandingan
+```
+
+### Visualisasi Perbandingan Revenue Tertinggi & Terendah 
+```{r visualisasi perbandingan, fig.width = 12}
+ggplot(Perbandingan, aes(x = perbandingan_kategori,
+                         y = perbandingan_revenue,
+                         fill = perbandingan_kategori)) +
+geom_bar(stat = "identity") +
+theme_minimal() +
+scale_fill_manual(values=c("#f59e0b", "#16a34a")) +
+labs(
+  title = "Perbandingan Total Pendapatan (Revenue) Tertinggi dan Terendah",
+  x = "Kategori Film",
+  y = "Total Pendapatan (Revenue)") +
+theme(
+  plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+  plot.subtitle = element_text(
+    hjust = 0.5, size = 14, face = "bold"),
+  axis.text.y = element_text(
+    size = 14, face = "bold"),
+  axis.text.x = element_text(
+  size = 14, face = "bold")) +
+scale_y_continuous(labels = dollar)
+```
+
+### Interpretasi 
+<p>Berdasarkan hasil analisis dan visualisasi, film berkategori sport menempati posisi tertinggi dengan total pendapatan (<em>revenue</em>) sebesar 5314,21. Sedangkan film berkategori music menempati posisi terendah dengan total pendapatan (<em>revenue</em>) sebesar 3417,72. Kategori film dengan <em>revenue</em> tertinggi menunjukkan performa rental yang sangat baik karena memiliki jumlah transaksi rental yang lebih tinggi. Sebaliknya, kategori film dengan <em>revenue</em> terendah menunjukkan aktivitas rental yang lebih rendah sehingga kontribusi pendapatannya lebih kecil.</p>
+
+# Kesimpulan dan Saran
+## Kesimpulan
+<p>Analisis terhadap <em>database</em> sakila menunjukkan adanya perbedaan total pendapatan (<em>revenue</em>) di setiap kategori film. Selain itu, terdapat hubungan linear positif antara jumlah rental dan total pendapatan pada masing-masing kategori film. Jumlah rental berkontribusi besar terhadap total pendapatan (<em>revenue</em>) perusahaan. Kategori film dengan jumlah rental yang tinggi cenderung menghasilkan total pendapatan (<em>revenue</em>) yang lebih besar. Hasil analisis ini dapat dimanfaatkan sebagai dasar pengambilan keputusan mengenai strategi bisnis yang tepat untuk meningkatkan profit perusahaan melalui pengelolaan inventory dan pemasaran kategori film.</p>
+
+## Saran
+1. Perusahaan rental film sebaiknya memperbanyak inventori pada kategori film populer seperti `Sport`, `Sci-fi`, dan `Animation`. Ketiganya merupakan kategori film yang menghasilkan total pendapatan (<em>revenue</em>) tertinggi sehingga dapat mendatangkan profit bagi perusahaan.
+2. Perusahaan dapat melakukan promosi terhadap kategori film dengan <em>revenue</em> rendah untuk menarik minat pelanggan dan meningkatkan aktivitas rental.
+3. Analisis lanjutan dapat dilakukan menggunakan variabel pendukung lain yang lebih spesifik untuk mengetahui insight mengenai profit perusahaan dengan lebih mendalam. 
